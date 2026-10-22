@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { formatCzk, formatDate, formatKm, today } from '../domain/dates'
 import { policyReminder, taskReminder } from '../domain/reminders'
 import {
@@ -14,6 +14,7 @@ import {
 } from '../domain/types'
 import { addMonths } from '../domain/dates'
 import { EmptyState, Field, FormActions, Modal, Plate, ReminderRow, formValues, num } from '../ui/components'
+import { useRemoveVehicle } from '../ui/useRemoveVehicle'
 import { newId, useStore } from '../store'
 
 type Tab = 'overview' | 'insurance' | 'service'
@@ -66,6 +67,8 @@ export default function VehicleDetail() {
 
 function Overview({ vehicle }: { vehicle: Vehicle }) {
   const { reminders, save } = useStore()
+  const removeVehicle = useRemoveVehicle()
+  const navigate = useNavigate()
   const [editingKm, setEditingKm] = useState(false)
   const mine = reminders.filter((r) => r.vehicleId === vehicle.id && r.status !== 'ok')
 
@@ -118,6 +121,16 @@ function Overview({ vehicle }: { vehicle: Vehicle }) {
           ))}
         </dl>
         {vehicle.notes && <p className="notes">{vehicle.notes}</p>}
+      </section>
+
+      <section>
+        <h2>Danger zone</h2>
+        <button
+          className="btn btn-danger"
+          onClick={async () => (await removeVehicle(vehicle)) && navigate('/vehicles')}
+        >
+          Remove vehicle
+        </button>
       </section>
 
       {editingKm && (

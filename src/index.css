@@ -323,9 +323,17 @@ code {
   gap: 0.6rem;
   color: inherit;
 }
-.card-link:hover {
-  text-decoration: none;
+.card-hover:hover {
   border-color: var(--accent);
+}
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  color: inherit;
+}
+.card-body:hover {
+  text-decoration: none;
 }
 .card-top {
   display: flex;

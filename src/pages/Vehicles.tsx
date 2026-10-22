@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom'
 import { formatKm } from '../domain/dates'
 import type { ReminderStatus } from '../domain/reminders'
 import { EmptyState, Plate, StatusBadge } from '../ui/components'
+import { useRemoveVehicle } from '../ui/useRemoveVehicle'
 import { useStore } from '../store'
 
 export default function Vehicles() {
   const { db, reminders } = useStore()
+  const removeVehicle = useRemoveVehicle()
 
   return (
     <>
@@ -29,23 +31,33 @@ export default function Vehicles() {
                 : 'ok'
             const next = mine[0]
             return (
-              <Link key={v.id} to={`/vehicles/${v.id}`} className={`card card-link card-${worst}`}>
-                <div className="card-top">
-                  <div>
-                    <h3>{v.nickname}</h3>
-                    <span className="muted">
-                      {v.make} {v.model} · {v.year}
-                    </span>
+              <div key={v.id} className={`card card-hover card-${worst}`}>
+                <Link to={`/vehicles/${v.id}`} className="card-body">
+                  <div className="card-top">
+                    <div>
+                      <h3>{v.nickname}</h3>
+                      <span className="muted">
+                        {v.make} {v.model} · {v.year}
+                      </span>
+                    </div>
+                    <StatusBadge status={worst} />
                   </div>
-                  <StatusBadge status={worst} />
+                  <Plate value={v.plate} />
+                  <div className="card-meta muted">
+                    <span>{formatKm(v.odometerKm)}</span>
+                    <span>{v.fuel}</span>
+                  </div>
+                  {next && <div className="card-next">Next: {next.title}</div>}
+                </Link>
+                <div className="actions">
+                  <Link to={`/vehicles/${v.id}/edit`} className="btn btn-sm">
+                    Edit
+                  </Link>
+                  <button className="btn btn-sm btn-danger" onClick={() => removeVehicle(v)}>
+                    Remove
+                  </button>
                 </div>
-                <Plate value={v.plate} />
-                <div className="card-meta muted">
-                  <span>{formatKm(v.odometerKm)}</span>
-                  <span>{v.fuel}</span>
-                </div>
-                {next && <div className="card-next">Next: {next.title}</div>}
-              </Link>
+              </div>
             )
           })}
         </div>

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { registry } from '../data/registry'
 import { FUEL_LABEL, type FuelType, type Vehicle } from '../domain/types'
 import { Field, FormActions, num } from '../ui/components'
+import { useRemoveVehicle } from '../ui/useRemoveVehicle'
 import { newId, useStore } from '../store'
 
 type Draft = Omit<Vehicle, 'id' | 'odometerKm' | 'year' | 'engineKw'> & {
@@ -41,7 +42,8 @@ type Lookup = { state: 'idle' } | { state: 'loading' } | { state: 'found' } | { 
 
 export default function VehicleForm() {
   const { id } = useParams()
-  const { db, save, remove } = useStore()
+  const { db, save } = useStore()
+  const removeVehicle = useRemoveVehicle()
   const navigate = useNavigate()
   const existing = db.vehicles.find((v) => v.id === id)
   const [draft, setDraft] = useState<Draft>(() => (existing ? toDraft(existing) : BLANK))
@@ -93,9 +95,7 @@ export default function VehicleForm() {
   }
 
   async function del() {
-    if (!existing || !confirm(`Delete ${existing.nickname} and all its insurance and service data?`)) return
-    await remove('vehicles', existing.id)
-    navigate('/vehicles')
+    if (existing && (await removeVehicle(existing))) navigate('/vehicles')
   }
 
   return (
