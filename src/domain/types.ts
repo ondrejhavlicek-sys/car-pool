@@ -19,7 +19,6 @@ export interface Vehicle {
   fuel: FuelType
   engineKw?: number
   color?: string
-  odometerKm: number
   notes?: string
   /** Where the technical data came from. */
   source: 'manual' | 'registry'

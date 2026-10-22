@@ -377,18 +377,6 @@ code {
   padding: 1rem;
   margin: 1rem 0;
 }
-.odo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.odo > div {
-  display: flex;
-  flex-direction: column;
-}
-.odo-value {
-  font-size: 1.6rem;
-}
 .facts {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

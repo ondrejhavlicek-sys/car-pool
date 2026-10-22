@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { formatCzk, formatDate, formatKm, today } from '../domain/dates'
+import { latestReading } from '../domain/odometer'
 import { policyReminder, taskReminder } from '../domain/reminders'
 import {
   FUEL_LABEL,
@@ -66,10 +67,9 @@ export default function VehicleDetail() {
 /* ------------------------------------------------------------------ overview */
 
 function Overview({ vehicle }: { vehicle: Vehicle }) {
-  const { reminders, save } = useStore()
+  const { reminders } = useStore()
   const removeVehicle = useRemoveVehicle()
   const navigate = useNavigate()
-  const [editingKm, setEditingKm] = useState(false)
   const mine = reminders.filter((r) => r.vehicleId === vehicle.id && r.status !== 'ok')
 
   const rows: [string, string][] = [
@@ -82,18 +82,6 @@ function Overview({ vehicle }: { vehicle: Vehicle }) {
 
   return (
     <>
-      <section className="panel">
-        <div className="odo">
-          <div>
-            <span className="muted">Odometer</span>
-            <strong className="odo-value">{formatKm(vehicle.odometerKm)}</strong>
-          </div>
-          <button className="btn" onClick={() => setEditingKm(true)}>
-            Update
-          </button>
-        </div>
-      </section>
-
       {mine.length > 0 && (
         <section>
           <h2>Needs attention</h2>
@@ -132,24 +120,6 @@ function Overview({ vehicle }: { vehicle: Vehicle }) {
           Remove vehicle
         </button>
       </section>
-
-      {editingKm && (
-        <Modal title="Update odometer" onClose={() => setEditingKm(false)}>
-          <form
-            className="form"
-            onSubmit={async (e) => {
-              const f = formValues(e)
-              await save('vehicles', { ...vehicle, odometerKm: num(f.km) ?? vehicle.odometerKm })
-              setEditingKm(false)
-            }}
-          >
-            <Field label="Current reading (km)">
-              <input name="km" type="number" min={0} required autoFocus defaultValue={vehicle.odometerKm} />
-            </Field>
-            <FormActions onCancel={() => setEditingKm(false)} />
-          </form>
-        </Modal>
-      )}
     </>
   )
 }
@@ -284,6 +254,7 @@ function ServiceTab({ vehicle }: { vehicle: Vehicle }) {
   const [editing, setEditing] = useState<ServiceTask | 'new' | null>(null)
   const [completing, setCompleting] = useState<ServiceTask | null>(null)
   const tasks = db.tasks.filter((t) => t.vehicleId === vehicle.id)
+  const odometerKm = latestReading(db, vehicle.id)?.km
   const records = db.records
     .filter((r) => r.vehicleId === vehicle.id)
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -302,7 +273,7 @@ function ServiceTab({ vehicle }: { vehicle: Vehicle }) {
       ) : (
         <ul className="list">
           {tasks.map((t) => {
-            const r = taskReminder(t, vehicle)
+            const r = taskReminder(t, odometerKm)
             const interval = [
               t.intervalMonths && `every ${t.intervalMonths} mo`,
               t.intervalKm && `every ${formatKm(t.intervalKm)}`,
@@ -467,8 +438,9 @@ function TaskModal({ vehicle, task, onClose }: { vehicle: Vehicle; task?: Servic
 
 /** Completes a scheduled task (task.id set) or logs a one-off visit (task.id empty). */
 function CompleteModal({ vehicle, task, onClose }: { vehicle: Vehicle; task: ServiceTask; onClose: () => void }) {
-  const { save } = useStore()
+  const { db, save } = useStore()
   const scheduled = task.id !== ''
+  const previous = latestReading(db, vehicle.id)
 
   return (
     <Modal title={scheduled ? `Done: ${task.title}` : 'Log service'} onClose={onClose}>
@@ -476,7 +448,7 @@ function CompleteModal({ vehicle, task, onClose }: { vehicle: Vehicle; task: Ser
         className="form"
         onSubmit={async (e) => {
           const f = formValues(e)
-          const km = num(f.km) ?? vehicle.odometerKm
+          const km = Number(f.km)
           await save('records', {
             id: newId(),
             vehicleId: vehicle.id,
@@ -488,7 +460,6 @@ function CompleteModal({ vehicle, task, onClose }: { vehicle: Vehicle; task: Ser
             notes: f.notes || undefined,
           })
           if (scheduled) await save('tasks', { ...task, lastDoneDate: f.date, lastDoneKm: km })
-          if (km > vehicle.odometerKm) await save('vehicles', { ...vehicle, odometerKm: km })
           onClose()
         }}
       >
@@ -499,8 +470,11 @@ function CompleteModal({ vehicle, task, onClose }: { vehicle: Vehicle; task: Ser
           <Field label="Date">
             <input name="date" type="date" required defaultValue={today()} />
           </Field>
-          <Field label="Odometer (km)">
-            <input name="km" type="number" min={0} required defaultValue={vehicle.odometerKm} />
+          <Field
+            label="Odometer (km)"
+            hint={previous ? `Last known: ${formatKm(previous.km)}` : 'Reading on the dashboard'}
+          >
+            <input name="km" type="number" min={0} required defaultValue={previous?.km} />
           </Field>
           <Field label="Cost (Kč)">
             <input name="cost" type="number" min={0} />

@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { formatKm } from '../domain/dates'
 import type { ReminderStatus } from '../domain/reminders'
 import { EmptyState, Plate, StatusBadge } from '../ui/components'
 import { useRemoveVehicle } from '../ui/useRemoveVehicle'
@@ -44,7 +43,6 @@ export default function Vehicles() {
                   </div>
                   <Plate value={v.plate} />
                   <div className="card-meta muted">
-                    <span>{formatKm(v.odometerKm)}</span>
                     <span>{v.fuel}</span>
                   </div>
                   {next && <div className="card-next">Next: {next.title}</div>}

@@ -1,5 +1,6 @@
 import { addDays, addMonths, daysBetween, today } from './dates'
-import type { Db, Id, InsurancePolicy, IsoDate, ServiceTask, Vehicle } from './types'
+import { latestReading } from './odometer'
+import type { Db, Id, InsurancePolicy, IsoDate, ServiceTask } from './types'
 
 export type ReminderStatus = 'overdue' | 'soon' | 'ok'
 
@@ -44,11 +45,12 @@ export function policyReminder(policy: InsurancePolicy, label: string): Reminder
   }
 }
 
-export function taskReminder(task: ServiceTask, vehicle: Vehicle): Reminder | undefined {
+/** `odometerKm` is the latest known reading; without one, mileage-based due dates cannot be judged. */
+export function taskReminder(task: ServiceTask, odometerKm: number | undefined): Reminder | undefined {
   const { date, km } = nextServiceDue(task)
   if (!date && km === undefined) return undefined
   const daysLeft = date ? daysBetween(today(), date) : undefined
-  const kmLeft = km !== undefined ? km - vehicle.odometerKm : undefined
+  const kmLeft = km !== undefined && odometerKm !== undefined ? km - odometerKm : undefined
 
   const overdue = (daysLeft !== undefined && daysLeft < 0) || (kmLeft !== undefined && kmLeft < 0)
   const soon =
@@ -85,8 +87,8 @@ export function buildReminders(db: Db): Reminder[] {
     if (vehicles.has(p.vehicleId)) out.push(policyReminder(p, POLICY_TITLE[p.kind]))
   }
   for (const t of db.tasks) {
-    const v = vehicles.get(t.vehicleId)
-    const r = v && taskReminder(t, v)
+    if (!vehicles.has(t.vehicleId)) continue
+    const r = taskReminder(t, latestReading(db, t.vehicleId)?.km)
     if (r) out.push(r)
   }
 

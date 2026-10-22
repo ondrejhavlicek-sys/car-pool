@@ -1,4 +1,6 @@
-import type { Db, RowOf, TableName } from '../domain/types'
+import { today } from '../domain/dates'
+import { latestReading } from '../domain/odometer'
+import type { Db, RowOf, TableName, Vehicle } from '../domain/types'
 import { createSeed } from './seed'
 
 /**
@@ -16,10 +18,30 @@ export interface Repository {
 
 const KEY = 'carpool.prototype.v1'
 
+/**
+ * Earlier prototype versions stored `odometerKm` on the vehicle. Keep that value as a
+ * reading in the service history (unless history already has a higher one) and drop the field.
+ */
+function migrateLegacyOdometer(db: Db): Db {
+  for (const v of db.vehicles as (Vehicle & { odometerKm?: number })[]) {
+    const km = v.odometerKm
+    delete v.odometerKm
+    if (km === undefined || (latestReading(db, v.id)?.km ?? -1) >= km) continue
+    db.records.push({
+      id: crypto.randomUUID(),
+      vehicleId: v.id,
+      title: 'Odometer reading (carried over)',
+      date: today(),
+      km,
+    })
+  }
+  return db
+}
+
 function read(): Db {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return JSON.parse(raw) as Db
+    if (raw) return migrateLegacyOdometer(JSON.parse(raw) as Db)
   } catch {
     // corrupted or unavailable storage – fall through to seed data
   }

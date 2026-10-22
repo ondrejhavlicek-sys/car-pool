@@ -18,7 +18,6 @@ export function createSeed(): Db {
         fuel: 'diesel',
         engineKw: 85,
         color: 'Grey',
-        odometerKm: 118_400,
         source: 'registry',
       },
       {
@@ -32,7 +31,6 @@ export function createSeed(): Db {
         fuel: 'petrol',
         engineKw: 55,
         color: 'White',
-        odometerKm: 152_900,
         source: 'registry',
       },
       {
@@ -46,7 +44,6 @@ export function createSeed(): Db {
         fuel: 'petrol',
         engineKw: 20,
         color: 'Red',
-        odometerKm: 6_300,
         source: 'manual',
       },
     ],
@@ -182,6 +179,29 @@ export function createSeed(): Db {
         km: 125_000,
         costCzk: 6_800,
         notes: 'Replaced front pads and discs',
+      },
+      {
+        id: 'r-4',
+        vehicleId: 'v-octavia',
+        title: 'Summer tyres swap',
+        date: addMonths(t, -1),
+        km: 118_400,
+        costCzk: 800,
+      },
+      {
+        id: 'r-5',
+        vehicleId: 'v-fabia',
+        title: 'Battery replacement',
+        date: addMonths(t, -1),
+        km: 152_900,
+        costCzk: 2_900,
+      },
+      {
+        id: 'r-6',
+        vehicleId: 'v-jawa',
+        title: 'Chain adjustment',
+        date: addMonths(t, -1),
+        km: 6_300,
       },
     ],
   }

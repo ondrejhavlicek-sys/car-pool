@@ -6,10 +6,9 @@ import { Field, FormActions, num } from '../ui/components'
 import { useRemoveVehicle } from '../ui/useRemoveVehicle'
 import { newId, useStore } from '../store'
 
-type Draft = Omit<Vehicle, 'id' | 'odometerKm' | 'year' | 'engineKw'> & {
+type Draft = Omit<Vehicle, 'id' | 'year' | 'engineKw'> & {
   year: string
   engineKw: string
-  odometerKm: string
 }
 
 const BLANK: Draft = {
@@ -22,7 +21,6 @@ const BLANK: Draft = {
   fuel: 'petrol',
   engineKw: '',
   color: '',
-  odometerKm: '',
   notes: '',
   source: 'manual',
 }
@@ -32,7 +30,6 @@ function toDraft(v: Vehicle): Draft {
     ...v,
     year: String(v.year),
     engineKw: v.engineKw?.toString() ?? '',
-    odometerKm: String(v.odometerKm),
     color: v.color ?? '',
     notes: v.notes ?? '',
   }
@@ -86,7 +83,6 @@ export default function VehicleForm() {
       fuel: draft.fuel,
       engineKw: num(draft.engineKw),
       color: draft.color || undefined,
-      odometerKm: num(draft.odometerKm) ?? 0,
       notes: draft.notes || undefined,
       source: draft.source,
     }
@@ -134,9 +130,6 @@ export default function VehicleForm() {
         <div className="row">
           <Field label="Nickname" hint="How you call it, e.g. “Family wagon”">
             <input value={draft.nickname} onChange={(e) => set('nickname', e.target.value)} />
-          </Field>
-          <Field label="Odometer (km)">
-            <input type="number" min={0} required value={draft.odometerKm} onChange={(e) => set('odometerKm', e.target.value)} />
           </Field>
         </div>
         <div className="row">
